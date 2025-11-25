@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Python Lesssgo Chat</title>
+
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    #chat { height: 60vh; border: 1px solid #aaa; padding: 10px; overflow-y: scroll; }
+    input { padding: 8px; margin: 5px; }
+    button { padding: 8px 12px; }
+  </style>
+</head>
+<body>
+
+<h2>Secure Flask Chat</h2>
+
+<h3>Login</h3>
+<input id="username" placeholder="username (user1–user5)">
+<input id="password" placeholder="password (pass1–pass5)" type="password">
+<button onclick="login()">Login</button>
+
+<p id="welcome"></p>
+
+<div id="chat"></div>
+
+<input id="msg" placeholder="Message">
+<button onclick="sendMsg()">Send</button>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  let displayName = "";
+
+  function append(text) {
+    const chat = document.getElementById("chat");
+    chat.innerHTML += text + "<br>";
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  socket.on("server_message", (data) => append("[SERVER] " + data.text));
+
+  socket.on("login_failed", (data) => {
+    alert(data.error);
+  });
+
+  socket.on("login_success", (data) => {
+    displayName = data.display_name;
+    document.getElementById("welcome").innerText =
+      "Logged in as: " + displayName;
+
+    append("[SYSTEM] " + displayName + " joined.");
+  });
+
+  socket.on("chat_message", (data) => {
+    append(data.from + ": " + data.text);
+  });
+
+  function login() {
+    socket.emit("login", {
+      username: document.getElementById("username").value,
+      password: document.getElementById("password").value
+    });
+  }
+
+  function sendMsg() {
+    const msg = document.getElementById("msg").value;
+
+    socket.emit("send_message", {
+      display_name: displayName,
+      message: msg
+    });
+
+    document.getElementById("msg").value = "";
+  }
+</script>
+
+</body>
+</html>
